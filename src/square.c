@@ -11,6 +11,7 @@ int solveSquare(Square *square)
             square->number = x + 1;
             square->solvable = 0;
             UNSOLVED--;
+            break;
         }
     }
     return 1;

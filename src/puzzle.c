@@ -1,11 +1,24 @@
 #include "sudoku.h"
 
-Square ***setUpPuzzle(int **puzzle)
+Sudoku * createSudoku(Square ***squares, Box ** boxes){
+    Sudoku * sudoku;
+    sudoku = malloc(sizeof(Sudoku));
+
+    sudoku->squares = squares;
+    sudoku->boxes = boxes;
+
+    return sudoku; 
+}
+
+Sudoku *setUpPuzzle(int **puzzle)
 {
     Square ***sudoku;
+    Box **boxes;
     int i, j, x;
+    int currentBox = 0;
 
     sudoku = (Square ***)malloc(sizeof(Square **) * 9);
+    boxes = createBoxes();
 
     for (i = 0; i < SIZE_ROWS; i++)
     {
@@ -13,17 +26,32 @@ Square ***setUpPuzzle(int **puzzle)
 
         for (j = 0; j < SIZE_COLUMNS; j++)
         {
-            sudoku[i][j] = (Square *)malloc(sizeof(Square) * 9);
+            sudoku[i][j] = (Square *)malloc(sizeof(Square));
             sudoku[i][j]->number = puzzle[i][j];
 
             sudoku[i][j]->row = i;
             sudoku[i][j]->column = j;
             sudoku[i][j]->solvable = 9;
 
+            boxes[currentBox]->squares[boxes[currentBox]->numbers] = sudoku[i][j];
+            sudoku[i][j]->box = boxes[currentBox];
+            boxes[currentBox]->numbers++;
+
             for (x = 0; x < SIZE_ROWS; x++)
             {
-                sudoku[i][j]->possible[x] = 0; 
+                sudoku[i][j]->possible[x] = 0;
             }
+            if (j == 2 || j == 5)
+            {
+                currentBox++;
+            }
+        }
+        currentBox-=2;
+        if(i==2){
+            currentBox=3;
+        }
+        if(i==5){
+            currentBox=6;
         }
     }
 
@@ -35,11 +63,12 @@ Square ***setUpPuzzle(int **puzzle)
             {
                 sudoku[i][j]->solvable = 0;
                 updateSudoku(sudoku, i, j);
+                updateBox(sudoku, i, j);
                 UNSOLVED--;
             }
         }
     }
-    return sudoku;
+    return createSudoku(sudoku, boxes);
 }
 
 int updateSudoku(Square ***sudoku, int row, int column)
@@ -68,7 +97,7 @@ int updateSudoku(Square ***sudoku, int row, int column)
     return 1;
 }
 
-int checkPuzzle(Square ***sudoku)
+int checkPuzzle(Square ***sudoku, Box ** boxes)
 {
     int i, j, x;
 
@@ -80,10 +109,16 @@ int checkPuzzle(Square ***sudoku)
             {
                 solveSquare(sudoku[i][j]);
                 updateSudoku(sudoku, i, j);
+                updateBox(sudoku,i,j);
+
+                return 1;
             }
         }
     }
-    return 1;
+    if(boxSingles(sudoku, boxes)){
+        return 1;
+    }
+    return checkRows(sudoku, boxes);
 }
 
 int **createPuzzle()
